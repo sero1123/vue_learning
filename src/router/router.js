@@ -4,6 +4,7 @@ import PostPage from '@/pages/PostPage'
 import About from '@/pages/About.vue'
 import Post from '@/pages/Post.vue'
 import PostPageWithVueX from '@/pages/PostPageWithVueX.vue'
+import PostPageWithCompositionAPI from '@/pages/PostPageWithCompositionApi.vue'
 
 const routes = [
     {
@@ -28,6 +29,10 @@ const routes = [
     {
         path: '/store',
         component: PostPageWithVueX
+    },
+    {
+        path: '/composition',
+        component: PostPageWithCompositionAPI
     }
 ]
 

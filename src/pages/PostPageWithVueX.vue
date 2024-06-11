@@ -2,10 +2,11 @@
     <div>
         <h1>Список постов</h1>
         <my-input 
-            v-model="searchQuery"
+            :model-value="searchQuery"
+            @update:model-value="setSearch"
             placeholder="Поиск"
             v-focus
-        />
+       />
 
         <div class="app__btns">
             <my-dialog v-model:show="dialogVisible">    
@@ -14,7 +15,8 @@
             />
             </my-dialog>
             <my-select 
-                v-model="selectedSort"
+                :model-value="selectedSort"
+                @update:model-value="setSelectedSort"
                 :options="sortOptions"
             />
         </div>
@@ -42,6 +44,7 @@ import PostForm from '@/components/postForm.vue'
 import PostList from '@/components/postList.vue'
 import axios from 'axios';
 import { watch } from 'vue';
+import { useStore, mapState, mapGetters, mapActions, mapMutations } from 'vuex';
 export default {
 
     components: {
@@ -49,21 +52,19 @@ export default {
     },
     data() {
         return {
-            posts : [],
             dialogVisible: false,
-            isPostsLoading: false,
-            selectedSort: '',
-            searchQuery: '',
-            page: 1,
-            limit: 10,
-            totalPages: 0,
-            sortOptions: [
-                {value: 'title', name: 'По названию'},
-                {value: 'body', name: 'По описанию'},
-                {value: 'id', name: 'По id'}
-            ]
         }
     }, methods: {
+        ...mapMutations({
+            setPage: 'post/setPage'   ,
+            setSearch: 'post/setSearchQuery',
+            setSelectedSort: 'post/setSelectedSort'
+        }),
+
+        ...mapActions   ({
+            loadMorePost: 'post/loadMorePost',
+            fetchPost: 'post/fetchPost'
+        }),
         createPost(post) {
             this.posts.push(post);
             this.dialogVisible = false;
@@ -78,28 +79,7 @@ export default {
         // changePage(pageNumber) {
         //     this.page = pageNumber
         // },
-        async fetchPost() {
-            try {
-                this.isPostsLoading = true;
-                    const response = await axios.get('https://jsonplaceholder.typicode.com/posts', {params: { _page: this.page, _limit: this.limit }});
-                    this.totalPages = Math.ceil(response.headers['x-total-count'] / this.limit);
-                    this.posts = response.data;
-            } catch(e) {
-                alert(e);
-            } finally {
-                this.isPostsLoading = false;
-            }
-        },
-        async loadMorePost() {
-            try {
-                this.page += 1;
-                const response = await axios.get('https://jsonplaceholder.typicode.com/posts', {params: { _page: this.page, _limit: this.limit }});
-                this.totalPages = Math.ceil(response.headers['x-total-count'] / this.limit);
-                this.posts = [...this.posts, ...response.data];
-            } catch(e) {
-                alert(e);
-            } 
-        },
+        
     },
     mounted() {
         this.fetchPost();
@@ -119,18 +99,22 @@ export default {
         // observer.observe(this.$refs.observer);
     },
     computed: {
-        sortedPosts() {
-            return [...this.posts].sort((post1, post2) =>{
-                try {
-                    return post1[this.selectedSort].toString()?.localeCompare(post2[this.selectedSort].toString());
-                }catch(e) {
-                    console.log(e);
-                }
-            })
-        },
-        sortedAndSearchedPosts() {
-                return this.sortedPosts.filter(post => post.title.toLowerCase().includes(this.searchQuery.toLowerCase()))
-            }     
+        ...mapState({
+            posts: state => state.post.posts, 
+            page: state => state.post.page, 
+            limit: state => state.post.limit, 
+            totalPages: state => state.post.totalPages, 
+            isPostsLoading: state => state.post.isPostsLoading,
+            selectedSort: state => state.post.selectedSort,
+            searchQuery: state => state.post.searchQuery,
+            sortOptions: state => state.post.sortOptions,
+
+        }),
+        ...mapGetters({
+            sortedPosts: 'post/sortedPosts',
+            sortedAndSearchedPosts: 'post/sortedAndSearchedPosts'
+        })
+   
     },
     watch: {
         // page() {
